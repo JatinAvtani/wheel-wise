@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./vitest.setup.js"],
-    include: ["**/*.test.js"],
+    include: ["**/*.test.{js,jsx}"],
     exclude: ["node_modules", ".next"],
   },
 });
