@@ -14,6 +14,8 @@ An AI-assisted car marketplace built with Next.js. Browse and search cars (inclu
 
 ## Getting started
 
+Requires Node.js `^20.19.0` or `>=22.12.0` (see `engines` in `package.json`).
+
 ### 1. Install dependencies
 
 ```bash
