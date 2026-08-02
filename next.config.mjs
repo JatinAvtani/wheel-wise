@@ -3,6 +3,12 @@ const nextConfig = {
   experimental: {
     serverComponentsHmrCache: false, // defaults to true
   },
+  // Linting runs as its own CI job (`npm run lint`); `next build`'s built-in
+  // ESLint step uses different machinery that's currently broken under this
+  // Next.js/ESLint flat-config combination (see README).
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -10,20 +16,6 @@ const nextConfig = {
         hostname: "ymqpkygmownybanldbpq.supabase.co",
       },
     ],
-  },
-
-  async headers() {
-    return [
-      {
-        source: "/embed",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: "frame-src 'self' https://roadsidecoder.created.app;",
-          },
-        ],
-      },
-    ];
   },
 };
 

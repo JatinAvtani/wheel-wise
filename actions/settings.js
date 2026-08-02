@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { requireAdmin } from "@/lib/checkUser";
 
 // Get dealership info with working hours
 export async function getDealershipInfo() {
@@ -100,17 +101,7 @@ export async function getDealershipInfo() {
 // Save working hours
 export async function saveWorkingHours(workingHours) {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    // Check if user is admin
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (!user || user.role !== "ADMIN") {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin();
 
     // Get current dealership info
     const dealership = await db.dealershipInfo.findFirst();
@@ -152,17 +143,7 @@ export async function saveWorkingHours(workingHours) {
 // Get all users
 export async function getUsers() {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    // Check if user is admin
-    const adminUser = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (!adminUser || adminUser.role !== "ADMIN") {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin();
 
     // Get all users
     const users = await db.user.findMany({
@@ -185,17 +166,7 @@ export async function getUsers() {
 // Update user role
 export async function updateUserRole(userId, role) {
   try {
-    const { userId: adminId } = await auth();
-    if (!adminId) throw new Error("Unauthorized");
-
-    // Check if user is admin
-    const adminUser = await db.user.findUnique({
-      where: { clerkUserId: adminId },
-    });
-
-    if (!adminUser || adminUser.role !== "ADMIN") {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin();
 
     // Update user role
     await db.user.update({

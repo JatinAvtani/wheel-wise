@@ -2,16 +2,11 @@
 
 import { serializeCarData } from "@/lib/helpers";
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getDbUser, requireAdmin } from "@/lib/checkUser";
 import { revalidatePath } from "next/cache";
 
 export async function getAdmin() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  const user = await getDbUser();
 
   // If user not found in our db or not an admin, return not authorized
   if (!user || user.role !== "ADMIN") {
@@ -26,17 +21,7 @@ export async function getAdmin() {
  */
 export async function getAdminTestDrives({ search = "", status = "" }) {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    // Verify admin status
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (!user || user.role !== "ADMIN") {
-      throw new Error("Unauthorized access");
-    }
+    await requireAdmin();
 
     // Build where conditions
     let where = {};
@@ -120,17 +105,7 @@ export async function getAdminTestDrives({ search = "", status = "" }) {
  */
 export async function updateTestDriveStatus(bookingId, newStatus) {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    // Verify admin status
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (!user || user.role !== "ADMIN") {
-      throw new Error("Unauthorized access");
-    }
+    await requireAdmin();
 
     // Get the booking
     const booking = await db.testDriveBooking.findUnique({
@@ -177,13 +152,7 @@ export async function updateTestDriveStatus(bookingId, newStatus) {
 
 export async function getDashboardData() {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    // Get user
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
+    const user = await getDbUser();
 
     if (!user || user.role !== "ADMIN") {
       return {

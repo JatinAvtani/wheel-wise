@@ -4,16 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/lib/prisma";
 import aj from "@/lib/arcjet";
 import { request } from "@arcjet/next";
-
-// Function to serialize car data
-function serializeCarData(car) {
-  return {
-    ...car,
-    price: car.price ? parseFloat(car.price.toString()) : 0,
-    createdAt: car.createdAt?.toISOString(),
-    updatedAt: car.updatedAt?.toISOString(),
-  };
-}
+import { serializeCarData } from "@/lib/helpers";
 
 /**
  * Get featured cars for the homepage
@@ -29,7 +20,7 @@ export async function getFeaturedCars(limit = 3) {
       orderBy: { createdAt: "desc" },
     });
 
-    return cars.map(serializeCarData);
+    return cars.map((car) => serializeCarData(car));
   } catch (error) {
     throw new Error("Error fetching featured cars:" + error.message);
   }

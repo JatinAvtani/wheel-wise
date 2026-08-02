@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdmin } from "@/lib/checkUser";
 import { serializeCarData } from "@/lib/helpers";
 
 // Function to convert File to base64
@@ -19,6 +19,8 @@ async function fileToBase64(file) {
 // Gemini AI integration for car image processing
 export async function processCarImageWithAI(file) {
   try {
+    await requireAdmin();
+
     // Check if API key is available
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("Gemini API key is not configured");
@@ -121,7 +123,7 @@ export async function processCarImageWithAI(file) {
       };
     }
   } catch (error) {
-    console.error();
+    console.error(error);
     throw new Error("Gemini API error:" + error.message);
   }
 }
@@ -129,14 +131,7 @@ export async function processCarImageWithAI(file) {
 // Add a car to the database with images
 export async function addCar({ carData, images }) {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (!user) throw new Error("User not found");
+    await requireAdmin();
 
     // Create a unique folder name for this car's images
     const carId = uuidv4();
@@ -245,7 +240,7 @@ export async function getCars(search = "") {
       orderBy: { createdAt: "desc" },
     });
 
-    const serializedCars = cars.map(serializeCarData);
+    const serializedCars = cars.map((car) => serializeCarData(car));
 
     return {
       success: true,
@@ -263,8 +258,7 @@ export async function getCars(search = "") {
 // Delete a car by ID
 export async function deleteCar(id) {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
+    await requireAdmin();
 
     // First, fetch the car to get its images
     const car = await db.car.findUnique({
@@ -286,7 +280,7 @@ export async function deleteCar(id) {
 
     // Delete the images from Supabase storage
     try {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const supabase = createClient(cookieStore);
 
       // Extract file paths from image URLs
@@ -332,8 +326,7 @@ export async function deleteCar(id) {
 // Update car status or featured status
 export async function updateCarStatus(id, { status, featured }) {
   try {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
+    await requireAdmin();
 
     const updateData = {};
 
